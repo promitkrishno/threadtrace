@@ -1,0 +1,33 @@
+spring:
+  datasource:
+    url: jdbc:tc:postgresql:16:///threadtrace
+    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+  flyway:
+    enabled: false
+  batch:
+    jdbc:
+      initialize-schema: always
+
+threadtrace:
+  process-steps:
+    RECEIVE:
+      label: "Receive Raw Material"
+      max-loss-percentage: 2.0
+    CUT:
+      label: "Cut Fabric"
+      max-loss-percentage: 12.0
+  valid-certificate-types:
+    - GOTS
+    - OEKO_TEX
+  emission-factors:
+    water-liters-per-unit: 2700.0
+    energy-kwh-per-unit: 15.5
+    co2e-kg-per-unit: 8.3
+  storage:
+    endpoint: http://localhost:9000
+    access-key: minioadmin
+    secret-key: minioadmin
+    bucket: threadtrace-test
