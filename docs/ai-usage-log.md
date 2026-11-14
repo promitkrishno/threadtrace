@@ -5,10 +5,10 @@ during the development of ThreadTrace, per academic integrity requirements.
 
 ## Log Format
 
-| Date       | Tool Used   | Prompt / Task Description                                                      | Output Used For                 | Modifications Made                          |
-|------------|-------------|--------------------------------------------------------------------------------|---------------------------------|---------------------------------------------|
-| 2026-11-13 | Antigravity | Project scaffolding: pom.xml, package structure, config classes, Docker, ADRs  | Initial project skeleton        | Reviewed and adjusted all generated code    |
-|            |             |                                                                                |                                 |                                             |
+| Date       | Tool Used   | Prompt / Task Description                                                                 | Output Used For                       | Modifications Made                          |
+|------------|-------------|-------------------------------------------------------------------------------------------|---------------------------------------|---------------------------------------------|
+| 2026-11-13 | Antigravity | Project scaffolding: pom.xml, package structure, config classes, Docker, ADRs             | Initial project skeleton              | Reviewed and adjusted all generated code    |
+| 2026-11-14 | Antigravity | Milestone 1: PostgreSQL Flyway schema, Registry, State/Composite patterns, CTE Traceability | Milestone 1 production implementation | End-to-end integration and unit verified   |
 
 ## Guidelines
 
