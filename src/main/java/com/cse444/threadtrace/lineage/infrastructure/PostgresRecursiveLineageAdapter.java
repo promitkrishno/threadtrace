@@ -1,12 +1,18 @@
 package com.cse444.threadtrace.lineage.infrastructure;
 
 import com.cse444.threadtrace.common.error.DomainException;
-import com.cse444.threadtrace.lineage.application.LineageTraceNode;
-import com.cse444.threadtrace.lineage.application.LineageTracePort;
-import com.cse444.threadtrace.lineage.application.LineageTraceResponse;
+import com.cse444.threadtrace.lineage.application.*;
+import com.cse444.threadtrace.lineage.domain.composite.LineageNode;
+import com.cse444.threadtrace.lineage.domain.strategy.AllocationStrategy;
+import com.cse444.threadtrace.lineage.domain.strategy.AllocationStrategyRegistry;
+import com.cse444.threadtrace.lineage.domain.strategy.FootprintMetrics;
+import com.cse444.threadtrace.lineage.domain.visitor.ClaimRollupResult;
+import com.cse444.threadtrace.lineage.domain.visitor.ClaimRollupVisitor;
+import com.cse444.threadtrace.lineage.domain.visitor.FootprintRollupVisitor;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -15,9 +21,17 @@ import java.util.UUID;
 public class PostgresRecursiveLineageAdapter implements LineageTracePort {
 
     private final JdbcClient jdbcClient;
+    private final LineageTreeBuilder lineageTreeBuilder;
+    private final AllocationStrategyRegistry strategyRegistry;
 
-    public PostgresRecursiveLineageAdapter(JdbcClient jdbcClient) {
+    public PostgresRecursiveLineageAdapter(
+            JdbcClient jdbcClient,
+            LineageTreeBuilder lineageTreeBuilder,
+            AllocationStrategyRegistry strategyRegistry
+    ) {
         this.jdbcClient = jdbcClient;
+        this.lineageTreeBuilder = lineageTreeBuilder;
+        this.strategyRegistry = strategyRegistry;
     }
 
     @Override
@@ -269,6 +283,47 @@ public class PostgresRecursiveLineageAdapter implements LineageTracePort {
                 maxDepth,
                 nodes,
                 Instant.now()
+        );
+    }
+
+    @Override
+    public LineageRollupResponse computeRollup(UUID lotId, String strategyName) {
+        LineageNode rootNode = lineageTreeBuilder.buildTree(lotId);
+        AllocationStrategy strategy = strategyRegistry.getStrategy(strategyName);
+
+        FootprintRollupVisitor footprintVisitor = new FootprintRollupVisitor(strategy);
+        rootNode.accept(footprintVisitor);
+
+        ClaimRollupVisitor claimVisitor = new ClaimRollupVisitor();
+        rootNode.accept(claimVisitor);
+
+        ClaimRollupResult claimResult = claimVisitor.getResult();
+        FootprintMetrics footprintMetrics = footprintVisitor.getRootMetrics();
+
+        BigDecimal pieceDivisor = "PIECES".equalsIgnoreCase(rootNode.getUnit()) && rootNode.getQuantity().compareTo(BigDecimal.ZERO) > 0
+                ? rootNode.getQuantity()
+                : BigDecimal.ONE;
+
+        FootprintMetrics perPiece = footprintMetrics.divide(pieceDivisor);
+
+        return new LineageRollupResponse(
+                rootNode.getLotId(),
+                rootNode.getLotNumber(),
+                strategy.getStrategyName(),
+                footprintMetrics.waterLiters(),
+                footprintMetrics.energyKwh(),
+                footprintMetrics.co2eKg(),
+                perPiece.waterLiters(),
+                perPiece.energyKwh(),
+                perPiece.co2eKg(),
+                claimResult.verifiedRecycledPct(),
+                claimResult.verifiedOrganicPct(),
+                claimResult.claimedRecycledPct(),
+                claimResult.claimedOrganicPct(),
+                claimResult.claimsValid(),
+                claimResult.hasOrphanLot(),
+                claimResult.violations(),
+                claimResult.orphanLotIds()
         );
     }
 }

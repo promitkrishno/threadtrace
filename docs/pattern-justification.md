@@ -21,15 +21,25 @@ aggregation.
 ## 3. Visitor Pattern — `lineage.domain.visitor`
 
 **Why:** Multiple cross-cutting operations (carbon footprint calculation,
-compliance audit, lineage export) must traverse the composite tree without
-modifying domain entities. Visitor separates these algorithms from the data
-structure.
+verified claims audit, orphan lot detection) must traverse the composite DAG
+without modifying domain entities. Visitor separates these algorithms from the
+data structure.
+**Implementation:**
+- `LineageVisitor`: Interface defining `visitLeaf(LeafSourceLot)` and `visitComposite(CompositeTransformedLot)`.
+- `FootprintRollupVisitor`: Traverses the lineage DAG to aggregate water (L), energy (kWh), and CO2e (kg) per lot and per piece using an `AllocationStrategy`.
+- `ClaimRollupVisitor`: Traverses the lineage DAG to verify certified recycled and organic percentages, checking that claims never exceed certified inputs and flagging orphan lots lacking verified source provenance. Returns immutable `ClaimRollupResult`.
 
 ## 4. Strategy Pattern — `lineage.domain.strategy`
 
-**Why:** Lineage queries may use different algorithms (recursive CTE,
-materialised path, or future graph DB). Strategy allows swapping implementations
-at configuration time without touching business logic.
+**Why:** Environmental footprints (water, energy, CO2e) must be apportioned
+differently across split and merged lots depending on accounting methodology
+(mass-based vs piece-count-based). Strategy permits switching allocation
+mechanisms dynamically via configuration or request without modifying rollup visitors.
+**Implementation:**
+- `AllocationStrategy`: Common interface defining `calculateRatio(...)` and `allocate(...)`.
+- `MassAllocationStrategy`: Allocates footprints normalized by mass in kilograms (KG).
+- `PieceCountAllocationStrategy`: Allocates footprints normalized by piece counts (PIECES / CARTONS).
+- `AllocationStrategyRegistry`: Resolves active strategy bean dynamically by name.
 
 ## 5. Builder Pattern — `passport.domain.builder`
 
@@ -45,9 +55,14 @@ list views.
 
 ## 7. Observer Pattern — `evidence.observer`
 
-**Why:** When evidence (certificates, lab reports, photos) is uploaded or
-expires, multiple subsystems (passport invalidation, notification, audit log)
-must react. Observer decouples the evidence lifecycle from downstream consumers.
+**Why:** When compliance certificates or test reports expire or approach
+expiry, downstream consumers (claim invalidation, lot quarantine, audit alerts)
+must react automatically without tight coupling to the evidence persistence layer.
+Observer decouples the evidence lifecycle from downstream business actions.
+**Implementation:**
+- `EvidenceExpiredEvent` & `EvidenceExpiringSoonEvent`: Immutable domain events published when certificates expire or enter the 30-day renewal window.
+- `EvidenceExpiryScheduler`: Periodically evaluates certificate dates against the current date and publishes expiry events via Spring's `ApplicationEventPublisher`.
+- `EvidenceEventListener`: Listens for `EvidenceExpiredEvent` and automatically revokes certified claims and transitions affected lots to `QUARANTINED` status.
 
 ## 8. CQRS (Command-Query Responsibility Segregation) — `passport.projection`
 

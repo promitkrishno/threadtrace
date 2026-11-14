@@ -3,10 +3,7 @@ package com.cse444.threadtrace.lineage.application;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
@@ -31,5 +28,14 @@ public class TraceController {
     @Operation(summary = "Trace forward from a raw/fabric lot to all descendant cartons, shipments, and buyers (FR3)")
     public ResponseEntity<LineageTraceResponse> traceForward(@PathVariable UUID lotId) {
         return ResponseEntity.ok(lineageTracePort.traceForward(lotId));
+    }
+
+    @GetMapping("/rollup/{lotId}")
+    @Operation(summary = "Execute visitor roll-up for footprint and claim verification on a lot's lineage DAG (FR4, FR6)")
+    public ResponseEntity<LineageRollupResponse> rollup(
+            @PathVariable UUID lotId,
+            @RequestParam(required = false, defaultValue = "MASS") String strategy
+    ) {
+        return ResponseEntity.ok(lineageTracePort.computeRollup(lotId, strategy));
     }
 }

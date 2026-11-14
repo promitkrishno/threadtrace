@@ -25,17 +25,20 @@ public class RecordLotEventUseCase {
     private final LotEventRepository lotEventRepository;
     private final LotLineageEdgeRepository lotLineageEdgeRepository;
     private final TraceabilityProperties properties;
+    private final MassBalanceValidator massBalanceValidator;
 
     public RecordLotEventUseCase(
             LotRepository lotRepository,
             LotEventRepository lotEventRepository,
             LotLineageEdgeRepository lotLineageEdgeRepository,
-            TraceabilityProperties properties
+            TraceabilityProperties properties,
+            MassBalanceValidator massBalanceValidator
     ) {
         this.lotRepository = lotRepository;
         this.lotEventRepository = lotEventRepository;
         this.lotLineageEdgeRepository = lotLineageEdgeRepository;
         this.properties = properties;
+        this.massBalanceValidator = massBalanceValidator;
     }
 
     public RecordEventResult recordEvent(RecordEventCommand command) {
@@ -78,21 +81,15 @@ public class RecordLotEventUseCase {
         // 2. Mass Balance and Loss Percentage Calculation
         BigDecimal inputQty = command.inputQuantity();
         BigDecimal outputQty = command.outputQuantity();
-        BigDecimal lossPct = BigDecimal.ZERO;
-        if (inputQty.compareTo(BigDecimal.ZERO) > 0 && inputQty.compareTo(outputQty) > 0) {
-            lossPct = inputQty.subtract(outputQty)
-                    .divide(inputQty, 4, RoundingMode.HALF_UP)
-                    .multiply(BigDecimal.valueOf(100))
-                    .setScale(2, RoundingMode.HALF_UP);
-        }
 
-        boolean massBalanceFlagged = false;
-        TraceabilityProperties.StepConfig stepConfig = properties.processSteps() != null
-                ? properties.processSteps().get(command.eventType().name())
-                : null;
-        if (stepConfig != null && lossPct.doubleValue() > stepConfig.maxLossPercentage()) {
-            massBalanceFlagged = true;
-        }
+        var massBalanceResult = massBalanceValidator.validate(
+                command.eventType(),
+                inputQty,
+                outputQty,
+                targetLot
+        );
+        BigDecimal lossPct = massBalanceResult.lossPercentage();
+        boolean massBalanceFlagged = massBalanceResult.flagged();
 
         // 3. Sustainability Step Metrics
         TraceabilityProperties.EmissionFactors emissions = properties.emissionFactors();
@@ -213,8 +210,11 @@ public class RecordLotEventUseCase {
                 childEvent.setRecordedAt(Instant.now());
                 lotEventRepository.save(childEvent);
             }
-            // Once split, parent lot is consumed
-            targetLot.updateStatusForEvent(command.eventType(), true);
+            if (massBalanceFlagged) {
+                targetLot.setStatus(LotStatus.QUARANTINED);
+            } else {
+                targetLot.updateStatusForEvent(command.eventType(), true);
+            }
         } else if (command.mergeParents() != null && !command.mergeParents().isEmpty()) {
             // 7. Handle N-to-1 Lot Merges
             for (ParentLotInput parentInput : command.mergeParents()) {
@@ -239,11 +239,19 @@ public class RecordLotEventUseCase {
                 );
                 lotLineageEdgeRepository.save(edge);
             }
-            targetLot.updateStatusForEvent(command.eventType(), false);
+            if (massBalanceFlagged) {
+                targetLot.setStatus(LotStatus.QUARANTINED);
+            } else {
+                targetLot.updateStatusForEvent(command.eventType(), false);
+            }
         } else {
             // Standard single-lot processing step
-            boolean isConsumed = outputQty.compareTo(BigDecimal.ZERO) <= 0;
-            targetLot.updateStatusForEvent(command.eventType(), isConsumed);
+            if (massBalanceFlagged) {
+                targetLot.setStatus(LotStatus.QUARANTINED);
+            } else {
+                boolean isConsumed = outputQty.compareTo(BigDecimal.ZERO) <= 0;
+                targetLot.updateStatusForEvent(command.eventType(), isConsumed);
+            }
         }
 
         lotRepository.save(targetLot);

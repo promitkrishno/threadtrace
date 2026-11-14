@@ -1,5 +1,8 @@
 package com.cse444.threadtrace.lineage.domain.composite;
 
+import com.cse444.threadtrace.lineage.domain.model.Unit;
+import com.cse444.threadtrace.lineage.domain.visitor.LineageVisitor;
+
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
@@ -14,9 +17,17 @@ public class LeafSourceLot implements LineageNode {
     private final String lotNumber;
     private final BigDecimal quantity;
     private final String unit;
+    private final Unit lotUnit;
     private final BigDecimal accumulatedWaterL;
     private final BigDecimal accumulatedEnergyKwh;
     private final BigDecimal accumulatedCo2eKg;
+
+    private BigDecimal certifiedRecycledPct = BigDecimal.ZERO;
+    private BigDecimal certifiedOrganicPct = BigDecimal.ZERO;
+    private BigDecimal claimedRecycledPct = BigDecimal.ZERO;
+    private BigDecimal claimedOrganicPct = BigDecimal.ZERO;
+    private boolean certificateAttached = false;
+    private boolean orphan = false;
 
     public LeafSourceLot(
             UUID lotId,
@@ -31,9 +42,44 @@ public class LeafSourceLot implements LineageNode {
         this.lotNumber = lotNumber;
         this.quantity = quantity;
         this.unit = unit;
+        this.lotUnit = parseUnit(unit);
         this.accumulatedWaterL = accumulatedWaterL != null ? accumulatedWaterL : BigDecimal.ZERO;
         this.accumulatedEnergyKwh = accumulatedEnergyKwh != null ? accumulatedEnergyKwh : BigDecimal.ZERO;
         this.accumulatedCo2eKg = accumulatedCo2eKg != null ? accumulatedCo2eKg : BigDecimal.ZERO;
+    }
+
+    private static Unit parseUnit(String u) {
+        if (u == null) return Unit.KG;
+        try {
+            return Unit.valueOf(u.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return Unit.KG;
+        }
+    }
+
+    public LeafSourceLot withCertifications(
+            BigDecimal certifiedRecycledPct,
+            BigDecimal certifiedOrganicPct,
+            boolean hasCertificate
+    ) {
+        this.certifiedRecycledPct = certifiedRecycledPct != null ? certifiedRecycledPct : BigDecimal.ZERO;
+        this.certifiedOrganicPct = certifiedOrganicPct != null ? certifiedOrganicPct : BigDecimal.ZERO;
+        this.certificateAttached = hasCertificate;
+        return this;
+    }
+
+    public LeafSourceLot withClaims(
+            BigDecimal claimedRecycledPct,
+            BigDecimal claimedOrganicPct
+    ) {
+        this.claimedRecycledPct = claimedRecycledPct != null ? claimedRecycledPct : BigDecimal.ZERO;
+        this.claimedOrganicPct = claimedOrganicPct != null ? claimedOrganicPct : BigDecimal.ZERO;
+        return this;
+    }
+
+    public LeafSourceLot setOrphan(boolean orphan) {
+        this.orphan = orphan;
+        return this;
     }
 
     @Override
@@ -57,6 +103,11 @@ public class LeafSourceLot implements LineageNode {
     }
 
     @Override
+    public Unit getLotUnit() {
+        return lotUnit;
+    }
+
+    @Override
     public boolean isLeaf() {
         return true;
     }
@@ -64,6 +115,21 @@ public class LeafSourceLot implements LineageNode {
     @Override
     public List<LineageNode> getParents() {
         return Collections.emptyList();
+    }
+
+    @Override
+    public BigDecimal getStepWaterL() {
+        return accumulatedWaterL;
+    }
+
+    @Override
+    public BigDecimal getStepEnergyKwh() {
+        return accumulatedEnergyKwh;
+    }
+
+    @Override
+    public BigDecimal getStepCo2eKg() {
+        return accumulatedCo2eKg;
     }
 
     @Override
@@ -79,5 +145,40 @@ public class LeafSourceLot implements LineageNode {
     @Override
     public BigDecimal getAccumulatedCo2eKg() {
         return accumulatedCo2eKg;
+    }
+
+    @Override
+    public BigDecimal getCertifiedRecycledPct() {
+        return certifiedRecycledPct;
+    }
+
+    @Override
+    public BigDecimal getCertifiedOrganicPct() {
+        return certifiedOrganicPct;
+    }
+
+    @Override
+    public BigDecimal getClaimedRecycledPct() {
+        return claimedRecycledPct;
+    }
+
+    @Override
+    public BigDecimal getClaimedOrganicPct() {
+        return claimedOrganicPct;
+    }
+
+    @Override
+    public boolean hasCertificate() {
+        return certificateAttached;
+    }
+
+    @Override
+    public boolean isOrphan() {
+        return orphan;
+    }
+
+    @Override
+    public void accept(LineageVisitor visitor) {
+        visitor.visitLeaf(this);
     }
 }
