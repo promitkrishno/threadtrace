@@ -23,6 +23,8 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
+                // Public Web Dashboard and Static Assets
+                .requestMatchers("/", "/css/**", "/js/**", "/favicon.ico").permitAll()
                 // Public Thymeleaf and Passport Endpoints (FR7, FR8, QA3, QA4)
                 .requestMatchers("/passports/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/passports/*/qr").permitAll()

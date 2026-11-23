@@ -5,6 +5,8 @@
 spring:
   application:
     name: threadtrace
+  profiles:
+    default: local
 
   # ── DataSource (env-var placeholders, no hardcoded secrets) ──
   datasource:

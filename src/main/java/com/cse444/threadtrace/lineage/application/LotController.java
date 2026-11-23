@@ -8,6 +8,9 @@ import com.cse444.threadtrace.lineage.infrastructure.LotRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -39,6 +42,12 @@ public class LotController {
     public ResponseEntity<RecordEventResult> recordEvent(@Valid @RequestBody RecordEventCommand command) {
         RecordEventResult result = recordLotEventUseCase.recordEvent(command);
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
+    }
+
+    @GetMapping
+    @Operation(summary = "List all lots with pagination")
+    public ResponseEntity<Page<LotEntity>> listLots(@PageableDefault(size = 20) Pageable pageable) {
+        return ResponseEntity.ok(lotRepository.findAll(pageable));
     }
 
     @GetMapping("/{lotId}")

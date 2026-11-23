@@ -134,4 +134,11 @@ public class EvidenceService {
                 .map(EvidenceResponse::from)
                 .toList();
     }
+
+    @Transactional(readOnly = true)
+    public List<EvidenceResponse> listAllEvidence() {
+        return evidenceRepository.findAll().stream()
+                .map(EvidenceResponse::from)
+                .toList();
+    }
 }

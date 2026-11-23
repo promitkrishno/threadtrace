@@ -234,6 +234,10 @@ public class DigitalPassportService {
         return bytes;
     }
 
+    public List<DigitalPassportEntity> listAllPassports() {
+        return passportRepository.findAll();
+    }
+
     private DigitalPassportEntity findEntity(String qrToken, Integer version) {
         if (version != null && version > 0) {
             return passportRepository.findByQrCodeTokenAndVersionNo(qrToken, version)

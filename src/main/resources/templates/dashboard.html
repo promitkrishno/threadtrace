@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ThreadTrace — Garment Supply-Chain Traceability Dashboard</title>
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}" href="/css/dashboard.css">
+</head>
+<body>
+
+    <!-- Sidebar Navigation -->
+    <aside class="app-sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon">TT</div>
+            <div>
+                <div class="brand-title">ThreadTrace</div>
+                <div class="brand-subtitle">Garment Supply-Chain</div>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-section-title">Operations & Health</div>
+            <a class="nav-item active" data-tab="overview">
+                <svg class="nav-icon" viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+                <span>Overview & Demo</span>
+            </a>
+
+            <div class="nav-section-title">Traceability Core</div>
+            <a class="nav-item" data-tab="registry">
+                <svg class="nav-icon" viewBox="0 0 24 24"><path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"/></svg>
+                <span>Parties & Facilities</span>
+            </a>
+            <a class="nav-item" data-tab="lots">
+                <svg class="nav-icon" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 2h1.5v3H12V5zm-2 0h1.5v3H10V5zm-2 0h1.5v3H8V5zm-3 2h2V5H5v2zm0 3h2v2H5v-2zm0 3h2v2H5v-2zm0 3h2v2H5v-2zm14 3h-2v-2h2v2zm0-3h-2v-2h2v2zm0-3h-2v-2h2v2zm0-3h-2V7h2v2zm0-4h-2V5h2v2z"/></svg>
+                <span>Lot Events & Splits</span>
+            </a>
+            <a class="nav-item" data-tab="tracer">
+                <svg class="nav-icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                <span>Lineage Tracer & Hash</span>
+            </a>
+
+            <div class="nav-section-title">Compliance & Passports</div>
+            <a class="nav-item" data-tab="evidence">
+                <svg class="nav-icon" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+                <span>Evidence & Expiry</span>
+            </a>
+            <a class="nav-item" data-tab="passports">
+                <svg class="nav-icon" viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9H9V9h10v2zm-4 4H9v-2h6v2zm4-8H9V5h10v2z"/></svg>
+                <span>Product Passports (DPP)</span>
+            </a>
+            <a class="nav-item" data-tab="imports">
+                <svg class="nav-icon" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+                <span>Bulk Factory Import</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div>Engine: <strong>Spring Boot 3.4.1</strong></div>
+            <div style="margin-top:2px; color:#94a3b8;">Offline Mode • Zero External CDNs</div>
+        </div>
+    </aside>
+
+    <!-- Main Application View -->
+    <main class="app-main">
+        <!-- Top Bar -->
+        <header class="app-topbar">
+            <div class="topbar-left">
+                <h1 id="topbar-title" class="page-title">Overview & Supply-Chain Health</h1>
+                <div class="status-pill">
+                    <span class="status-dot pulse"></span>
+                    <span>SYSTEM ONLINE</span>
+                </div>
+            </div>
+
+            <div class="topbar-right">
+                <!-- Role / Auth Switcher (QA3 & Live Demo) -->
+                <div class="auth-switcher-container">
+                    <span class="role-label">Identity:</span>
+                    <select id="role-select" class="role-select" onchange="setRole(this.value)">
+                        <option value="PUBLIC" selected>Public (Unauthenticated)</option>
+                        <option value="BRAND_A">Brand A: Patagonia (ROLE_BRAND)</option>
+                        <option value="BRAND_B">Brand B: Nike Competitor (ROLE_BRAND)</option>
+                        <option value="AUDITOR">Auditor Inspector (ROLE_AUDITOR)</option>
+                    </select>
+                </div>
+                <span id="active-role-badge" class="role-badge public">Public</span>
+
+                <a href="/swagger-ui.html" target="_blank" class="topbar-btn">Swagger Docs ↗</a>
+                <a href="/actuator/health" target="_blank" class="topbar-btn">Health JSON ↗</a>
+            </div>
+        </header>
+
+        <!-- Content Area -->
+        <div class="app-content">
+
+            <!-- ============================================================== -->
+            <!-- TAB 1: OVERVIEW & DEMO DATA -->
+            <!-- ============================================================== -->
+            <div id="tab-overview" class="tab-panel active">
+                <!-- KPI Row -->
+                <div class="grid-6">
+                    <div class="kpi-card">
+                        <div class="kpi-label">Parties / Facilities</div>
+                        <div id="kpi-parties" class="kpi-value">- / -</div>
+                        <div class="kpi-sub">Tier 1 to Tier 4 Registry</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">Active / Total Lots</div>
+                        <div id="kpi-lots" class="kpi-value">- / -</div>
+                        <div class="kpi-sub">Current in-process inventory</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">Recorded Events</div>
+                        <div id="kpi-events" class="kpi-value">-</div>
+                        <div class="kpi-sub">Immutable SHA-256 chained</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">Product Passports</div>
+                        <div id="kpi-passports" class="kpi-value">-</div>
+                        <div class="kpi-sub">CQRS published versions</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">Expiring Certs</div>
+                        <div id="kpi-expiring" class="kpi-value">-</div>
+                        <div class="kpi-sub">Within &le; 30 Days</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">Actuator Health</div>
+                        <div id="kpi-health" class="kpi-value" style="color:#16a34a;">UP</div>
+                        <div class="kpi-sub">H2 / PostgreSQL DB & Storage</div>
+                    </div>
+                </div>
+
+                <!-- Demo Seeding Action Banner -->
+                <div class="action-banner">
+                    <div class="banner-content">
+                        <h2>Interactive Live Defence & Demo Orchestrator</h2>
+                        <p>One-click scenario seeders to showcase the full 6-level Bangladeshi RMG supply chain, multi-brand tenant isolation, and the 4 planted QA2 violation detection engines.</p>
+                    </div>
+                    <div class="banner-actions">
+                        <button id="btn-seed-rmg" class="btn btn-primary" onclick="seedRmgDemo()">Seed RMG Supply-Chain Demo</button>
+                        <button id="btn-seed-violations" class="btn btn-danger" onclick="seedViolationsDemo()">Seed QA2 Violation Scenarios</button>
+                    </div>
+                </div>
+
+                <!-- Dynamic Demo Outputs -->
+                <div id="demo-seed-summary" style="display:none;"></div>
+                <div id="demo-violations-container" style="display:none;"></div>
+
+                <!-- Quick Capabilities Summary -->
+                <div class="grid-3" style="margin-top:20px;">
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">Recursive Lineage (FR3, QA1)</span>
+                        </div>
+                        <div class="card-body" style="font-size:13px; color:#475569;">
+                            <p>PostgreSQL Recursive Common Table Expression (CTE) traverses backward to source cotton/recycled yarn lots and forward to shipped carton lots in under <strong>50 ms</strong> (benchmarked on 200k lots / 2M events).</p>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">Audience Security Views (FR8, QA3)</span>
+                        </div>
+                        <div class="card-body" style="font-size:13px; color:#475569;">
+                            <p>Public consumers see fibre composition and footprints. Brands only see their own supply-chain nodes. Cross-brand access returns <strong>HTTP 403</strong>, and only Auditors see exact addresses and commercial unit prices.</p>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">Observer Pattern Expiry (FR5, QA2)</span>
+                        </div>
+                        <div class="card-body" style="font-size:13px; color:#475569;">
+                            <p>When an audit certificate expires, Spring ApplicationEvents notify linked lots to immediately transition to <strong>QUARANTINED</strong> status and revoke certified green claims from downstream passports.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================== -->
+            <!-- TAB 2: PARTIES & FACILITIES (FR1) -->
+            <!-- ============================================================== -->
+            <div id="tab-registry" class="tab-panel">
+                <div class="grid-2">
+                    <!-- Register Party Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">Register Supply-Chain Party</span>
+                        </div>
+                        <div class="card-body">
+                            <form id="form-register-party">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">Party Type</label>
+                                        <select id="party-type" class="form-control" required>
+                                            <option value="BRAND">BRAND (Buyer)</option>
+                                            <option value="SPINNING_MILL">SPINNING_MILL (Tier 3)</option>
+                                            <option value="FABRIC_MILL">FABRIC_MILL (Tier 2)</option>
+                                            <option value="DYE_HOUSE">DYE_HOUSE (Tier 2)</option>
+                                            <option value="WASH_PLANT">WASH_PLANT (Tier 2)</option>
+                                            <option value="TRIMS_SUPPLIER">TRIMS_SUPPLIER (Tier 2)</option>
+                                            <option value="FACTORY" selected>FACTORY (Tier 1 Garments)</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">External Code</label>
+                                        <input type="text" id="party-code" class="form-control" placeholder="e.g. MILL-SHA-002" required>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">Company Name</label>
+                                        <input type="text" id="party-name" class="form-control" placeholder="e.g. Shasha Denim Ltd" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Country Code</label>
+                                        <input type="text" id="party-country" class="form-control" placeholder="BD, US, SE" maxlength="2" required>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Exact Address (Confidential Commercial Field)</label>
+                                    <input type="text" id="party-address" class="form-control" placeholder="e.g. Plot 14, DEPZ Savar, Dhaka">
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">Worker Count (Confidential)</label>
+                                        <input type="number" id="party-workers" class="form-control" placeholder="1500">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Unit Price BDT (Confidential)</label>
+                                        <input type="number" step="0.01" id="party-price" class="form-control" placeholder="480.00">
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Register Party</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Register Facility Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">Register Facility / Production Line</span>
+                        </div>
+                        <div class="card-body">
+                            <form id="form-register-facility">
+                                <div class="form-group">
+                                    <label class="form-label">Parent Party Organization</label>
+                                    <select id="fac-party-select" class="form-control" required>
+                                        <option value="">Loading parties...</option>
+                                    </select>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">Facility Type</label>
+                                        <select id="fac-type" class="form-control" required>
+                                            <option value="MILL">MILL</option>
+                                            <option value="FACTORY" selected>FACTORY</option>
+                                            <option value="WASH_PLANT">WASH_PLANT</option>
+                                            <option value="PRODUCTION_LINE">PRODUCTION_LINE</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Location City</label>
+                                        <input type="text" id="fac-city" class="form-control" placeholder="e.g. Gazipur, Dhaka" required>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Facility or Line Name</label>
+                                    <input type="text" id="fac-name" class="form-control" placeholder="e.g. DBL Cutting Unit 2" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Register Facility</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Parties Table -->
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Registered Supply-Chain Parties (Live QA3 Audience Masking)</span>
+                        <span style="font-size:12px; color:#64748b;">Notice: Confidential commercial fields reveal for Auditor role only.</span>
+                    </div>
+                    <div class="card-body table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Name</th>
+                                    <th>Type</th>
+                                    <th>Country</th>
+                                    <th>Exact Address (QA3)</th>
+                                    <th>Workers (QA3)</th>
+                                    <th>Unit Price (QA3)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="parties-tbody">
+                                <tr><td colspan="7" style="text-align:center;">Loading parties...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Facilities Table -->
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Registered Physical Facilities & Lines</span>
+                    </div>
+                    <div class="card-body table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Facility Name</th>
+                                    <th>Type</th>
+                                    <th>City</th>
+                                    <th>Party ID</th>
+                                    <th>Facility ID</th>
+                                </tr>
+                            </thead>
+                            <tbody id="facilities-tbody">
+                                <tr><td colspan="5" style="text-align:center;">Loading facilities...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================== -->
+            <!-- TAB 3: LOT EVENTS & MASS BALANCE (FR2, FR4, FR6) -->
+            <!-- ============================================================== -->
+            <div id="tab-lots" class="tab-panel">
+                <!-- ProblemDetail Alert Banner (Hidden by default) -->
+                <div id="mass-balance-error-banner" class="problem-detail-alert">
+                    <div id="problem-detail-title" class="problem-detail-title">Mass Balance Error</div>
+                    <div id="problem-detail-body" class="problem-detail-body"></div>
+                </div>
+
+                <!-- Event Recording Form Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Record Lot Transformation Event (Immutable Event Sourcing)</span>
+                    </div>
+                    <div class="card-body">
+                        <form id="form-record-event">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Event Mode</label>
+                                    <select id="event-mode-select" class="form-control" onchange="onEventModeChange()">
+                                        <option value="TRANSFORM" selected>Transformation Step on Existing Lot</option>
+                                        <option value="GENESIS">Genesis Lot Creation (RECEIVE)</option>
+                                        <option value="SPLIT">1-to-N Lot Split (e.g. CUT / PACK)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Event Type</label>
+                                    <select id="event-type-select" class="form-control">
+                                        <option value="RECEIVE">RECEIVE</option>
+                                        <option value="CUT" selected>CUT (Max loss 12%)</option>
+                                        <option value="SEW">SEW</option>
+                                        <option value="WASH">WASH</option>
+                                        <option value="DYE">DYE</option>
+                                        <option value="FINISH">FINISH</option>
+                                        <option value="PACK">PACK</option>
+                                        <option value="SHIP">SHIP</option>
+                                        <option value="CORRECTION">CORRECTION</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Executing Facility</label>
+                                    <select id="event-facility-select" class="form-control" required>
+                                        <option value="">Loading facilities...</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Genesis specific fields -->
+                            <div id="event-genesis-fields" style="display:none; background:#f8fafc; border:1px solid #e2e8f0; padding:14px; border-radius:6px; margin-bottom:14px;">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">New Lot Number</label>
+                                        <input type="text" id="event-new-lot-number" class="form-control" placeholder="e.g. LOT-YARN-GEN-01">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Brand Tenant</label>
+                                        <select id="event-brand-select" class="form-control">
+                                            <option value="">Loading brands...</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">Style Code</label>
+                                        <input type="text" id="event-style-code" class="form-control" placeholder="e.g. STYLE-2026">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Shipment Code</label>
+                                        <input type="text" id="event-shipment-code" class="form-control" placeholder="e.g. SHIP-BD-01">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Target Lot field for Non-Genesis -->
+                            <div id="event-target-lot-group" class="form-group">
+                                <label class="form-label">Target Lot</label>
+                                <select id="event-target-lot-select" class="form-control">
+                                    <option value="">Loading lots...</option>
+                                </select>
+                            </div>
+
+                            <!-- Split fields -->
+                            <div id="event-split-container" style="display:none; background:#f0fdf4; border:1px solid #86efac; padding:14px; border-radius:6px; margin-bottom:14px;">
+                                <h4 style="font-size:13px; color:#166534; margin-bottom:8px;">1-to-N Split Child Output:</h4>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">Child Lot Number</label>
+                                        <input type="text" id="split-child-lot-number" class="form-control" placeholder="e.g. LOT-CUT-BUNDLE-01">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Child Quantity</label>
+                                        <input type="number" step="0.01" id="split-child-qty" class="form-control" placeholder="e.g. 200">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Quantities & Allocation Strategy -->
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Input Quantity</label>
+                                    <input type="number" step="0.01" id="event-input-qty" class="form-control" placeholder="100.0" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Output Quantity</label>
+                                    <input type="number" step="0.01" id="event-output-qty" class="form-control" placeholder="95.0" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Unit</label>
+                                    <select id="event-unit-select" class="form-control" required>
+                                        <option value="KG" selected>KG</option>
+                                        <option value="PIECES">PIECES</option>
+                                        <option value="CARTONS">CARTONS</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Allocation Strategy</label>
+                                    <select id="event-strategy-select" class="form-control">
+                                        <option value="BY_MASS" selected>By Mass (KG)</option>
+                                        <option value="BY_PIECE_COUNT">By Piece Count</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">Record Event & Validate Mass Balance</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Lots Table -->
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Lots Inventory & Accumulated Footprint</span>
+                    </div>
+                    <div class="card-body table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Lot Number</th>
+                                    <th>Status</th>
+                                    <th>Style / Shipment</th>
+                                    <th>Quantity</th>
+                                    <th>Certified Claims</th>
+                                    <th>Accumulated Footprint</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="lots-tbody">
+                                <tr><td colspan="7" style="text-align:center;">Loading lots...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================== -->
+            <!-- TAB 4: LINEAGE TRACER & HASH INTEGRITY (FR3, FR10, QA1) -->
+            <!-- ============================================================== -->
+            <div id="tab-tracer" class="tab-panel">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Select Lot to Trace or Verify</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-row" style="align-items:flex-end;">
+                            <div class="form-group" style="flex:2;">
+                                <label class="form-label">Select Registered Lot</label>
+                                <select id="tracer-lot-select" class="form-control" onchange="document.getElementById('tracer-lot-manual').value = this.value">
+                                    <option value="">-- Choose Lot --</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="flex:2;">
+                                <label class="form-label">Or Enter Exact Lot UUID</label>
+                                <input type="text" id="tracer-lot-manual" class="form-control" placeholder="UUID e.g. 550e8400-e29b-41d4-a716-446655440000">
+                            </div>
+                            <div class="form-group" style="display:flex; gap:8px;">
+                                <button class="btn btn-primary" onclick="traceBackward()">Trace Backward (To Sources)</button>
+                                <button class="btn btn-accent" onclick="traceForward()">Trace Forward (To Shipments)</button>
+                                <button class="btn btn-secondary" onclick="verifyHashChainIntegrity()">Verify Cryptographic Hash</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Integrity Result Banner -->
+                <div id="integrity-result-card" class="card" style="display:none; padding:18px; border-width:2px;"></div>
+
+                <!-- Lineage Graph / Pipeline Results -->
+                <div id="lineage-results-container" class="card" style="display:none;">
+                    <div class="card-header">
+                        <span class="card-title">Multi-Level DAG Lineage Trace Path</span>
+                        <span id="tracer-latency-badge" class="status-pill">0 ms</span>
+                    </div>
+                    <div class="card-body">
+                        <div id="lineage-pipeline-container" class="lineage-pipeline"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================== -->
+            <!-- TAB 5: EVIDENCE & EXPIRY ALERTS (FR5, QA2) -->
+            <!-- ============================================================== -->
+            <div id="tab-evidence" class="tab-panel">
+                <div class="grid-2">
+                    <!-- Upload Certificate Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">Upload & Attach Certificate / Audit Report</span>
+                        </div>
+                        <div class="card-body">
+                            <form id="form-upload-evidence">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">Certificate Type</label>
+                                        <select id="cert-type" class="form-control" required>
+                                            <option value="GRS" selected>GRS (Global Recycled Standard)</option>
+                                            <option value="GOTS">GOTS (Global Organic Textile Standard)</option>
+                                            <option value="OEKO_TEX">OEKO_TEX Standard 100</option>
+                                            <option value="HIGG_INDEX">Higg Index Facility Verification</option>
+                                            <option value="ZDHC">ZDHC Chemical Gateway</option>
+                                            <option value="ISO_14001">ISO 14001 Environmental</option>
+                                            <option value="BSCI">BSCI Social Audit</option>
+                                            <option value="WRAP">WRAP Compliance</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Issuer Organization</label>
+                                        <input type="text" id="cert-issuer" class="form-control" placeholder="e.g. Control Union" required>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Scope Description</label>
+                                    <input type="text" id="cert-scope" class="form-control" placeholder="e.g. Scope Certificate for 100% Recycled Cotton">
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">Claim Type</label>
+                                        <select id="cert-claim-type" class="form-control" required>
+                                            <option value="RECYCLED" selected>RECYCLED</option>
+                                            <option value="ORGANIC">ORGANIC</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Certified %</label>
+                                        <input type="number" step="0.1" id="cert-percentage" class="form-control" placeholder="50.0" required>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">Valid From</label>
+                                        <input type="date" id="cert-valid-from" class="form-control" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Valid Until</label>
+                                        <input type="date" id="cert-valid-until" class="form-control" required>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">Attach to Supplier Party</label>
+                                        <select id="cert-party-select" class="form-control">
+                                            <option value="">-- Optional Supplier --</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Attach to Specific Lot</label>
+                                        <select id="cert-lot-select" class="form-control">
+                                            <option value="">-- Optional Lot --</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Certificate Document File (PDF / Image)</label>
+                                    <input type="file" id="cert-file" class="form-control" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Upload & Store Evidence</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Expiry Alerts & Observer Job Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">Certificate Expiry Alerts & Observer Trigger</span>
+                            <button id="btn-run-expiry-check" class="btn btn-secondary btn-sm" onclick="triggerExpiryCheckNow()">Run Expiry Check Now</button>
+                        </div>
+                        <div class="card-body">
+                            <p style="font-size:12.5px; color:#64748b; margin-bottom:12px;">
+                                Certificates expiring within &le; 30 days or already expired trigger Spring ApplicationEvents. The Observer pattern automatically quarantines lots and revokes uncertified claims.
+                            </p>
+                            <div id="evidence-expiry-alerts">
+                                <p style="color:#64748b;">Loading expiry status...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Certificates Table -->
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">All Compliance Certificates & Test Reports</span>
+                    </div>
+                    <div class="card-body table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Standard</th>
+                                    <th>Issuer</th>
+                                    <th>Claim</th>
+                                    <th>Validity Period</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="evidence-tbody">
+                                <tr><td colspan="6" style="text-align:center;">Loading evidence...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================== -->
+            <!-- TAB 6: DIGITAL PRODUCT PASSPORTS (FR7, FR8, QA3, QA4) -->
+            <!-- ============================================================== -->
+            <div id="tab-passports" class="tab-panel">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Generate Digital Product Passport (CQRS & Builder Pattern)</span>
+                    </div>
+                    <div class="card-body">
+                        <form id="form-generate-passport">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Style Code</label>
+                                    <input type="text" id="passport-style-code" class="form-control" placeholder="e.g. STYLE-PAT-101" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Shipment Code</label>
+                                    <input type="text" id="passport-shipment-code" class="form-control" placeholder="e.g. SHIP-2026-BD01" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Brand Owner</label>
+                                    <select id="passport-brand-select" class="form-control" required>
+                                        <option value="">Loading brands...</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Root Carton Lot (Finished Product)</label>
+                                    <select id="passport-carton-select" class="form-control" required>
+                                        <option value="">Loading carton lots...</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Custom Dynamic Attributes (QA5 Extensibility JSON)</label>
+                                <input type="text" id="passport-custom-fields" class="form-control" placeholder='{"circularity_score": "A+", "carbon_offset_partner": "South Pole"}'>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Generate Passport & Render QR Code</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Passports Table -->
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Published Passports & Audience Views</span>
+                    </div>
+                    <div class="card-body table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Style</th>
+                                    <th>Shipment</th>
+                                    <th>Version</th>
+                                    <th>QR Code</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="passports-tbody">
+                                <tr><td colspan="5" style="text-align:center;">Loading passports...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================== -->
+            <!-- TAB 7: BULK FACTORY IMPORT (FR9) -->
+            <!-- ============================================================== -->
+            <div id="tab-imports" class="tab-panel">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Factory Bulk Import (Spring Batch FR9)</span>
+                        <div>
+                            <a href="/api/v1/dashboard/sample-csv" class="btn btn-secondary btn-sm" download>Download Sample CSV</a>
+                            <a href="/api/v1/dashboard/sample-xlsx" class="btn btn-secondary btn-sm" download>Download Sample XLSX</a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <form id="form-bulk-import">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Import Type</label>
+                                    <select id="import-type" class="form-control">
+                                        <option value="cutting-report" selected>Cutting Report (.CSV)</option>
+                                        <option value="packing-list">Packing List (.XLSX)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" style="flex:2;">
+                                    <label class="form-label">Select File to Import</label>
+                                    <input type="file" id="import-file" class="form-control" required>
+                                </div>
+                                <div class="form-group" style="display:flex; align-items:flex-end;">
+                                    <button type="submit" id="btn-submit-import" class="btn btn-primary">Upload & Execute Import</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Import Execution Report -->
+                <div id="import-report-container" class="card" style="display:none;">
+                    <div class="card-header">
+                        <span class="card-title">Import Execution Report</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="grid-3">
+                            <div class="kpi-card">
+                                <div class="kpi-label">Total Rows</div>
+                                <div id="import-kpi-total" class="kpi-value">-</div>
+                            </div>
+                            <div class="kpi-card">
+                                <div class="kpi-label">Successfully Accepted</div>
+                                <div id="import-kpi-success" class="kpi-value" style="color:#16a34a;">-</div>
+                            </div>
+                            <div class="kpi-card">
+                                <div class="kpi-label">Rejected Rows</div>
+                                <div id="import-kpi-rejected" class="kpi-value" style="color:#dc2626;">-</div>
+                            </div>
+                        </div>
+
+                        <h4 style="margin:20px 0 10px; font-size:14px; font-weight:700;">Structured Rejection Report (Exact Lines & Reasons):</h4>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Row #</th>
+                                    <th>Rejection Reason</th>
+                                    <th>Raw Payload</th>
+                                </tr>
+                            </thead>
+                            <tbody id="import-rejections-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Modal: Audience Security Inspector (QA3 & Live Demo) -->
+    <div id="audience-modal" class="modal-backdrop">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div>
+                    <h3>Audience Security View Inspector (QA3)</h3>
+                    <span style="font-size:12px; color:#64748b;">QR Token: <code id="audience-modal-token"></code></span>
+                </div>
+                <button class="modal-close" onclick="closeAudienceModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                    <div style="display:flex; gap:8px;">
+                        <button class="btn btn-secondary btn-sm" onclick="testAudienceEndpoint('PUBLIC')">Test Public View</button>
+                        <button class="btn btn-secondary btn-sm" onclick="testAudienceEndpoint('BRAND')">Test Brand View</button>
+                        <button class="btn btn-secondary btn-sm" onclick="testAudienceEndpoint('AUDITOR')">Test Auditor View</button>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span id="audience-active-role-badge" style="font-size:11.5px; font-weight:600; color:#334155;">Active: Public</span>
+                        <span id="audience-status-badge" class="badge badge-active">HTTP 200 OK</span>
+                    </div>
+                </div>
+
+                <div id="audience-qa3-callout" style="margin-bottom:14px;"></div>
+
+                <pre id="audience-json-preview" class="json-pre">Loading...</pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Toast Notification Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Dashboard Vanilla JavaScript -->
+    <script th:src="@{/js/dashboard.js}" src="/js/dashboard.js"></script>
+</body>
+</html>

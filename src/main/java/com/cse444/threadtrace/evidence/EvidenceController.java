@@ -78,6 +78,12 @@ public class EvidenceController {
         return ResponseEntity.ok(evidenceService.getEvidenceForParty(partyId));
     }
 
+    @GetMapping
+    @Operation(summary = "List all evidence documents")
+    public ResponseEntity<List<EvidenceResponse>> listAllEvidence() {
+        return ResponseEntity.ok(evidenceService.listAllEvidence());
+    }
+
     @PostMapping("/check-expiry")
     @Operation(summary = "Trigger on-demand check for expiring and expired certificates")
     public ResponseEntity<EvidenceExpiryScheduler.ExpiryCheckResult> triggerExpiryCheck() {

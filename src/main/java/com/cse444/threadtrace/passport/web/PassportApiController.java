@@ -5,6 +5,7 @@ import com.cse444.threadtrace.passport.projection.AuditorPassportView;
 import com.cse444.threadtrace.passport.projection.BrandPassportView;
 import com.cse444.threadtrace.passport.projection.PublicPassportView;
 import com.cse444.threadtrace.passport.proxy.PassportAccessPort;
+import com.cse444.threadtrace.passport.domain.builder.DigitalPassportEntity;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpHeaders;
@@ -14,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -49,6 +51,12 @@ public class PassportApiController {
                 request.customFields()
         ));
         return ResponseEntity.status(HttpStatus.CREATED).body(result.publicView());
+    }
+
+    @GetMapping
+    @Operation(summary = "List all digital product passports")
+    public ResponseEntity<List<DigitalPassportEntity>> listPassports() {
+        return ResponseEntity.ok(passportService.listAllPassports());
     }
 
     @GetMapping("/{qrToken}")
